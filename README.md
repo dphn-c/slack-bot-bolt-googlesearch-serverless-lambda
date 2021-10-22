@@ -95,7 +95,6 @@ S3_BUCKET_NAME=**********
    └── src
        ├── answerBot.js # respond to button
        ├── authorize.js
-       ├── commandQueryGenerator.js
        ├── install.js
        ├── refreshTokens.js
        ├── searchImages.js
