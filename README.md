@@ -2,7 +2,7 @@
 
 ## Goal
 
-1. Use Google Api to search the image and return it when user call with example command.
+1. Use Google Api to search the image and return it when user call with example command
 
 2. Implement token rotation
 
@@ -87,6 +87,7 @@ S3_BUCKET_NAME=**********
 
    ```bash
    ├── app.js
+   ├── .env
    ├── package-lock.json
    ├── package.json
    ├── node_modules
