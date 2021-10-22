@@ -1,0 +1,85 @@
+service: example-bot
+
+frameworkVersion: '2'
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  region: ap-northeast-1
+  environment:
+    SLACK_SIGNING_SECRET: ${env:SLACK_SIGNING_SECRET_TEST}
+    SLACK_CLIENT_ID: ${env:SLACK_CLIENT_ID_TEST}
+    SLACK_CLIENT_SECRET: ${env:SLACK_CLIENT_SECRET_TEST}
+    CSE_ID: ${env:CSE_ID}
+    API_KEY: ${env:API_KEY}
+    SLACK_INSTALLATION_DYNAMODB_NAME: ${env:SLACK_INSTALLATION_DYNAMODB_NAME}
+  lambdaHashingVersion: 20201221
+  logRetentionInDays: 1
+  versionFunctions: false 
+  stage: dev
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+      Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:service}-${self:provider.stage}-*"
+      
+functions:
+  slackEventFn:
+    handler: app.eventHandler
+    events:
+      - http:
+          path: slack/events
+          method: post
+  slackOAuthFlow:
+    handler: app.oauthHandler
+    events:
+      - http:
+          path: slack/install
+          method: get
+      - http:
+          path: slack/oauth_redirect
+          method: get
+  slackRefreshToken:
+    handler: app.autoRefreshTokenHandler
+    events:
+      - schedule: rate(10 hours)
+
+package:
+  individually: true
+  patterns:
+    - '!*.json'
+    - '!node_modules/**'
+    - '!README.md'
+    - '!*.yml'
+
+resources:
+  Resources:
+    installationDB:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}-${self:provider.stage}-installationDB
+        AttributeDefinitions:
+          - AttributeName: userID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userID
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+
+plugins:
+  - serverless-offline
+  - serverless-layers
+  - serverless-prune-plugin
+
+custom:
+  serverless-layers: 
+    layersDeploymentBucket: ${env:S3_BUCKET_NAME}
+  prune:
+    automatic: true
+    number: 3
